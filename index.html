@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Membantu browser dalam mengidentifikasi aplikasi support dengan mobile device -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- Judul pada tab browser -->
+    <title>UAS GENAP WEBGIS</title>
+
+    <!-- Leaflet CSS Library -->
+    <link rel="stylesheet" href="http://unpkg.com/leaflet@1.0.2/dist/leaflet.css"/>
+    <!-- Leaflet JavaScript Library -->
+    <script src="http://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+
+    <style>
+      html, body, #map {
+        height: 100%;
+        width: 100%;
+        margin: 0px;
+      }
+    </style>
+
+  <style>
+     table { /*style untuk tabel*/
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+    }
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+    tr:nth-child(even) {
+      background-color: #B6DBEE; //warna tabel
+    }
+    </style>
+
+  </head>
+  <body>
+    <!-- Leaflet Jquery, menarik data jquery GeoJSON-->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+    <!-- HTML Block untuk menampilkan peta -->
+    <div id="map"></div>
+      <script>
+      /* Initial Map */
+      //lat, long, zoom (tampilan awal dapat dicari dari google earth)
+      var map = L.map('map').setView([-6.995016,110.418427],8);
+              
+      /* Tile Basemap */
+      var openstreetmap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        });
+
+      var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17, attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+      });
+
+      var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+      var Stamen_Terrain = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}', {
+      attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        subdomains: 'abcd',
+        minZoom: 0,
+        maxZoom: 18,
+        ext: 'png'
+        });
+
+      var Esri_NatGeoWorldMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+        maxZoom: 16
+        });
+
+      var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+         });
+
+       var Esri_WorldTopoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+          });
+
+      var Stadia_Outdoors = L.tileLayer('https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+        });
+
+      
+      openstreetmap.addTo(map); //Memanggil basemap untuk ditampilkan ketika halaman dipanggil
+
+    /* GeoJSON Polygon */
+    var adminkabupaten = L.geoJson(null, {
+    //     /* Style polygon */
+    // style: function (feature) { //Fungsi style polyline
+    //     //   return {
+    //     //     fillColor: "red", //Warna tengah polygon
+    //     //     fillOpacity: 0.7, //Transparansi tengah polygon
+    //     //     color: "black", //Warna garis tepi polygon
+    //     //     weight: 1, //Tebal garis tepi polygon
+    //     //     opacity: 1, //Transparansi garis tepi polygon
+    //     //   };
+    //     // },
+    //     if (feature.properties.luas <= 100 ) {
+    //       return {
+    //         opacity: 1,
+    //         color: 'black', //warna garis tepi
+    //         weight: 1.0,
+    //         fillOpacity: 0.7,
+    //         fillColor: '#fee8c8'
+    //       }
+    //     }
+    //     if (feature.properties.luas > 100 && feature.properties.luas <= 1000 ) {
+    //       return {
+    //         opacity: 1,
+    //         color: 'black', //warna garis tepi
+    //         weight: 1.0,
+    //         fillOpacity: 0.7,
+    //         fillColor: '#fdbb84'
+    //       }
+    //     }
+    //     if (feature.properties.luas > 1000) {
+    //       return {
+    //         opacity: 1,
+    //         color: 'black', //warna garis tepi
+    //         weight: 1.0,
+    //         fillOpacity: 0.7,
+    //         fillColor: '#e34a33'
+    //       }
+    //     }
+    //   },
+
+     /* Style polygon */
+       style: function (feature) { //Fungsi style polyline
+          if (feature.properties.Sekolah <= 439.60 ) {
+          return {
+            opacity: 1,
+            color: 'black', //warna garis tepi
+            weight: 1.0,
+            fillOpacity: 0.7,
+            fillColor: '#eff3ff'
+          }
+        }
+        if (feature.properties.Sekolah > 439.60 && feature.properties.Sekolah <= 499.60) {
+          return {
+            opacity: 1,
+            color: 'black', //warna garis tepi
+            weight: 1.0,
+            fillOpacity: 0.7,
+            fillColor: '#bdd7e7'
+          }
+        }
+        if (feature.properties.Sekolah > 499.60&& feature.properties.Sekolah <= 596.80) {
+          return {
+            opacity: 1,
+            color: 'black', //warna garis tepi
+            weight: 1.0,
+            fillOpacity: 0.7,
+            fillColor: '#6baed6'
+          }
+        }
+        if (feature.properties.Sekolah > 596.80 && feature.properties.Sekolah <= 752.00) {
+          return {
+            opacity: 1,
+            color: 'black', //warna garis tepi
+            weight: 1.0,
+            fillOpacity: 0.7,
+            fillColor: '#3182bd'
+          }
+        }
+        if (feature.properties.Sekolah > 752.00) {
+          return {
+            opacity: 1,
+            color: 'black', //warna garis tepi
+            weight: 1.0,
+            fillOpacity: 0.7,
+            fillColor: '#08519c'
+          }
+        }
+      },
+
+        /* Highlight & Popup */
+        onEachFeature: function (feature, layer) {
+        // var content = 'Kabupaten '+feature.properties.KABUPATEN + "<br>" +
+        //                 'Slogan ' + feature.properties.SLOGAN + "<br>" +
+        //                 'Luas ' + feature.properties.luas
+        var content = "<table>" + 
+          "<tr><th><b>Provinsi</b> </th><td>"+feature.properties.Provinsi+"</td> </tr>"+
+          "<tr><th><b>Kabupaten</b> </th><td>"+feature.properties.Kabupaten+"</td> </tr>"+
+          "<tr><th><b>Nama</b> </th><td>"+feature.properties.Nama+"</td> </tr>"+
+          "<tr><th><b>Alamat</b> </th><td>"+feature.properties.Alamat+"</td> </tr>"+ 
+          "<tr><th><b>Luas</b></th><td>"+feature.properties.Luas+"Ha"+"</td> </tr>"+
+          "<tr><th><b>Jumlah Sekolah</b></th><td>"+feature.properties.Sekolah+"</td> </tr>"+
+          "<tr><th><b>Alamat Website</b></th><td>"+"<a href='"+feature.properties.url+"' target='_blank'> kunjungi website </a>"+"</td> </tr>"+
+          "<tr><th><b>Logo</b></th><td>"+"<img src='assets/logo/"+feature.properties.logo+"' width='50'>"+"</td> </tr>"+
+          "<tr><td colspan='2'>"+feature.properties.video+"</td> </tr>"+ //jika videonya mau 2 kolom
+          // "<tr><th>Video</th><td>"+feature.properties.video+"</td> </tr>"+ //jika videonya mau 1 kolom
+          "</table>"
+           
+          var tooltipcontent = "Kota/Kabupaten" + " <br> " + feature.properties.Kabupaten + " <br> ";
+          layer.on({
+            mouseover: function (e) { //Fungsi mouse berada di atas obyek
+              var layer = e.target; //variabel layer
+              layer.setStyle({ //Highlight style
+                weight: 2, //Tebal garis tepi polygon
+                color: "#00FFFF", //Warna garis tepi polygon
+                opacity: 1, //Transparansi garis tepi polygon
+                fillColor: "yellow", //Warna tengah polygon
+                fillOpacity: 1, //Transparansi tengah polygon
+              });
+              adminkabupaten.bindTooltip(tooltipcontent);
+            },
+            mouseout: function (e) { //Fungsi mouse keluar dari area di atas obyek
+              adminkabupaten.resetStyle(e.target); //Mengembalikan style garis ke style awalnya
+              // map.closePopup(); //Menutup popup
+            },
+            click: function (e) { //Fungsi ketika obyek di-klik
+              adminkabupaten.bindPopup(content); //Popup
+            }
+          });
+        }
+      });
+      /* memanggil data geojson polyline */
+      $.getJSON("data/titik_jateng.geojson", function (data) {
+        adminkabupaten.addData(data);
+        map.addLayer(adminkabupaten); //adminkabupaten ditampilkan ketika halaman dipanggil
+      });
+
+    /* GeoJSON Point */
+      var titikkabkota = L.geoJson(null, {
+        pointToLayer: function (feature, latlng) {
+          return L.marker(latlng, {
+            icon: L.icon({
+              iconUrl: "assets/marker/map-icon.png", //icon simbol: peletakan gambar
+              iconSize: [21, 21], //ukuran icon simbol
+              iconAnchor: [12, 24], //penempatan icon simbol
+              popupAnchor: [0, -4], //penempatan popup terhadap icon simbol
+            })
+          });
+        },
+       
+        /* Popup */
+        onEachFeature: function (feature, layer) {
+          if (feature.properties) {
+          var content = "Kabupaten : " + feature.properties.Kabupaten + "<br>" +
+                        "Nama : "+ feature.properties.Nama + "<br>" +
+                        "Alamat : " + feature.properties.Alamat + "<br>"+ 
+                        "Luas : " + feature.properties.Luas + "<br>"+
+                        "Jumlah Sekolah : " + feature.properties.Sekolah + "<br>"+
+                        "Logo" + "<br>"+ 
+                        "<img src='assets/logo/"+eature.properties.logo+"' width='50' >" + "<br>"+ 
+                        "Website:" + "<a href='"+feature.properties.url+"'target='_blank'> kunjungi website </a>" +"<br>"+feature.properties.video
+                        ;
+          layer.on({
+              click: function (e) { //Fungsi ketika icon simbol di-klik
+                titikkabkota.bindPopup(content); //content disini menmanggil content diatasnya, bisa langsung
+              }
+            });
+          }
+        }
+      });
+      // /* memanggil data geojson point */
+      //* memanggil data geojson polyline */
+      $.getJSON("data/titik.geojson", function (data) {
+        titikkabkota.addData(data);
+        map.addLayer(titikkabkota); //adminkabupaten ditampilkan ketika halaman dipanggil
+      });
+
+    /* GeoJSON Point */
+      var titikkabkota = L.geoJson(null, {
+        pointToLayer: function (feature, latlng) {
+          return L.marker(latlng, {
+            icon: L.icon({
+              iconUrl: "assets/marker/map-icon.png", //icon simbol: peletakan gambar
+              iconSize: [20, 21], //ukuran icon simbol
+              iconAnchor: [12, 24], //penempatan icon simbol
+              popupAnchor: [0, -4], //penempatan popup terhadap icon simbol
+            })
+          });
+        },
+
+        /* Popup */
+        onEachFeature: function (feature, layer) {
+          if (feature.properties) {
+            var content = "Kantor Kabupaten/Kota : " + feature.properties.Kabupaten + "<br>" +
+                        "Nama Bupati/ Walikota : "+ feature.properties.Nama + "<br>" +
+                        "Alamat : " + feature.properties.Alamat + "<br>"+ 
+                        "Luas : " + feature.properties.Luas + "<br>"+ 
+                        "Jumlah Sekolah : " + feature.properties.Sekolah + "<br>"+
+                        "Logo" + "<br>"+ 
+                        "<img src='assets/logo/"+feature.properties.logo+"' width='50' >" + "<br>"+ 
+                        "Website:" + "<a href='"+feature.properties.url+"'target='_blank'> kunjungi website </a>" +"<br>"+
+                        feature.properties.video
+                        ;
+            layer.on({
+            click: function (e) { //Fungsi ketika icon simbol di-klik
+            titikkabkota.bindPopup(content); //content disini menmanggil content diatasnya, bisa langsung
+          }
+        });
+          }
+        }
+      });
+
+      /* TITLE/JUDUL */
+      var title = new L.Control({position:"topright"});
+      /*defaultnya adlaah kanan atas*/
+      title.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info'); /*penghubungnya adalah div dan info*/
+        this.update();
+        return this._div;
+      };
+      title.update = function () {
+        this._div.innerHTML = '<h2>Jumlah Sekolah di Provinsi Jawa Tengah 2020 - Dela Gustiara - 19611066</h2>' 
+      };
+      title.addTo(map);
+
+
+
+      /*Control Layer*/
+      var baseMaps = {
+      /*yang kuning adalah nama yang muncul, yan putih adalah nama variabel*/
+      'Open Street Map':openstreetmap,
+      'Open Topo Map': OpenTopoMap,
+      'Esri WorldImagery': Esri_WorldImagery,
+      'Stamen Terrain' : Stamen_Terrain,
+      'Esri NatGeo WorldMap' : Esri_NatGeoWorldMap,
+      'Esri WorldStreetMap' : Esri_WorldStreetMap,
+      'Esri World TopoMap' : Esri_WorldTopoMap,
+      'Stadia Outdoors' : Stadia_Outdoors,
+      };
+      var Layers = {
+      //'Luas Daerah' : adminkabupaten,
+      'Jumlah Sekolah <br> <img src="assets/legenda.png" height="70">': adminkabupaten,
+      'Titik Kantor Kabupaten/Walikota' :titikkabkota,
+      };
+
+      //Membuat Watermark/
+      L.Control.Watermark = L.Control.extend({
+        onAdd: function(map) {
+          var img = L.DomUtil.create('img');
+          img.src = 'assets/watermark.PNG'; /Hati-hati lokasi logonya/
+          img.style.width = '300px';
+          return img;
+        },
+        onRemove: function(map) {
+        // Nothing to do here
+
+      }
+    });
+      L.control.watermark = function(opts) {
+        return new L.Control.Watermark(opts);
+      }
+      L.control.watermark({ position: 'bottomleft' }).addTo(map);
+      
+      var layerControl = L.control.layers(baseMaps, Layers, {collapsed:false});
+      layerControl.addTo(map);
+      </script>
+  </body>
+</html>
